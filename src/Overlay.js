@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AiFillCamera, AiOutlineArrowLeft, AiOutlineHighlight, AiOutlineShopping } from 'react-icons/ai'
 import { useSnapshot } from 'valtio'
 import { state } from './store'
+import { useRef } from 'react'
+import axios from 'axios'
 
 export function Overlay() {
   const snap = useSnapshot(state)
@@ -45,10 +47,7 @@ export function Overlay() {
                     delay: 0.2,
                     delayChildren: 0.2
                   }}>
-                  <p>
-                    Create your unique and exclusive shirt with our brand-new 3D customization tool. <strong>Unleash your imagination</strong> and define your
-                    own style.
-                  </p>
+                  <p>Create your own shirt</p>
                   <button style={{ background: snap.color }} onClick={() => (state.intro = false)}>
                     CUSTOMIZE IT <AiOutlineHighlight size="1.3em" />
                   </button>
@@ -67,6 +66,7 @@ export function Overlay() {
 }
 
 function Customizer() {
+  const ref = useRef()
   const snap = useSnapshot(state)
   return (
     <div className="customizer">
@@ -75,25 +75,49 @@ function Customizer() {
           <div key={color} className={`circle`} style={{ background: color }} onClick={() => (state.color = color)}></div>
         ))}
       </div>
+
       <div className="decals">
         <div className="decals--container">
-          {snap.decals.map((decal) => (
-            <div key={decal} className={`decal`} onClick={() => (state.decal = decal)}>
-              <img src={decal + '_thumb.png'} alt="brand" />
-            </div>
-          ))}
+          <textarea ref={ref}></textarea>
+          <button
+            onClick={() => {
+              console.log(ref.current.value)
+              // Make a request for a user with a given ID
+              axios({
+                method: 'POST',
+                url: '/api/generate',
+                data: {
+                  text:ref.current.value,
+                },
+                responseType: 'blob',
+              })
+                .then(function (response) {
+                  // handle success
+                  const imageURL = URL.createObjectURL(response.data);
+                  state.decal = imageURL
+                })
+                .catch(function (error) {
+                  // handle error
+                  console.log(error)
+                })
+                .finally(function () {
+                  // always executed
+                })
+            }}>
+            Submit
+          </button>
         </div>
       </div>
       <button
         className="share"
         style={{ background: snap.color }}
         onClick={() => {
-          const link = document.createElement('a')
-          link.setAttribute('download', 'canvas.png')
-          link.setAttribute('href', document.querySelector('canvas').toDataURL('image/png').replace('image/png', 'image/octet-stream'))
-          link.click()
+          // const link = document.createElement('a')
+          // link.setAttribute('download', 'canvas.png')
+          // link.setAttribute('href', document.querySelector('canvas').toDataURL('image/png').replace('image/png', 'image/octet-stream'))
+          // link.click()
         }}>
-        DOWNLOAD
+        BUY
         <AiFillCamera size="1.3em" />
       </button>
       <button className="exit" style={{ background: snap.color }} onClick={() => (state.intro = true)}>
